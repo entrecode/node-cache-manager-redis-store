@@ -9,7 +9,14 @@ var redisStore = function redisStore() {
     args[_key] = arguments[_key];
   }
 
-  var redisCache = Redis.createClient.apply(Redis, args);
+  var redisCache = void 0;
+
+  if (args.length > 0 && args[0].redisClient) {
+    redisCache = args[0].redisClient;
+  } else {
+    redisCache = Redis.createClient.apply(Redis, args);
+  }
+
   var storeArgs = redisCache.options;
 
   return {
