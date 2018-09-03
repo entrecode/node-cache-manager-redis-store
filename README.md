@@ -15,6 +15,47 @@ This is a **completely different version** than the earlier [node-cache-manager-
  
 This package aims to provide **the most simple wrapper possible** by just passing the configuration to the underlying `node_redis` package.
 
+How is this package different from `quentin-sommer/node-cache-manager-redis-store`?
+----------------------------------------------------------------------------------
+It supports using an own redis instance:
+
+```js
+const cacheManager = require('cache-manager');
+const config = require('config');
+const redis = require('redis');
+const redisStore = require('cache-manager-redis-store');
+const logger = require('ec.logger');
+
+const memoryCache = cacheManager.caching({
+  store: 'memory',
+  max: 1000,
+  ttl: config.redis.active ? 1 : config.ttl,
+});
+
+let redisCache = false;
+let redisClient = false;
+
+if (config.redis.active) {
+  redisClient = redis.createClient(Object.assign(config.redis, { ttl: config.ttl }));
+
+  redisClient.on('error', (error) => {
+    logger.error(`Error connecting to redis: ${error.stack}`);
+  });
+
+  redisCache = cacheManager.caching({
+    store: redisStore,
+    redisClient,
+  });
+}
+
+const multiCache = cacheManager.multiCaching([memoryCache, redisCache].filter(x => !!x));
+
+module.exports = {
+  multiCache,
+  redisClient,
+};
+```
+
 Installation
 ------------
 
